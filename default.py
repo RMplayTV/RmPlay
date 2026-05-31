@@ -1,29 +1,17 @@
 import sys
 import os
-from urllib.parse import parse_qsl
 
+# Add resources/lib to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'resources', 'lib'))
 
 import xbmcplugin
 import xbmcgui
-from tv import TV
-from filmes import Filmes
-from series import Series
-from desenhos import Desenhos
-from pesquisa import Pesquisa
+import xbmcaddon
 
 addon_handle = int(sys.argv[1])
-params = dict(parse_qsl(sys.argv[2].replace('?', '')))
 
-tv = TV()
-filmes = Filmes()
-series = Series()
-desenhos = Desenhos()
-pesquisa_obj = Pesquisa()
-
-xbmcplugin.setContent(addon_handle, 'videos')
-
-def show_main_menu():
+# Menu principal simples
+def main_menu():
     items = [
         ("📺 TV AO VIVO", "tv"),
         ("🎬 FILMES", "filmes"),
@@ -32,38 +20,95 @@ def show_main_menu():
         ("🔍 PESQUISA", "pesquisa"),
     ]
     
-    for nome, action in items:
+    for label, action in items:
+        li = xbmcgui.ListItem(label)
         url = f"plugin://plugin.video.rmtv/?action={action}"
-        item = xbmcgui.ListItem(nome)
-        xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=item, isFolder=True)
+        xbmcplugin.addDirectoryItem(addon_handle, url, li, isFolder=True)
     
     xbmcplugin.endOfDirectory(addon_handle)
 
-def add_video_item(nome, url, thumb='', fanart='', info=None):
-    item = xbmcgui.ListItem(nome)
-    item.setProperty('IsPlayable', 'true')
-    if info:
-        item.setInfo('video', info)
-    xbmcplugin.addDirectoryItem(handle=addon_handle, url=url, listitem=item, isFolder=False)
+# Menu de TV
+def tv_menu():
+    items = [
+        ("Canal 1", "http://example.com/stream1.m3u8"),
+        ("Canal 2", "http://example.com/stream2.m3u8"),
+    ]
+    
+    for label, url in items:
+        li = xbmcgui.ListItem(label)
+        li.setProperty('IsPlayable', 'true')
+        xbmcplugin.addDirectoryItem(addon_handle, url, li, isFolder=False)
+    
+    xbmcplugin.endOfDirectory(addon_handle)
 
-action = params.get('action')
+# Menu de Filmes
+def filmes_menu():
+    items = [
+        ("Filme 1", "http://example.com/filme1.mp4"),
+        ("Filme 2", "http://example.com/filme2.mp4"),
+    ]
+    
+    for label, url in items:
+        li = xbmcgui.ListItem(label)
+        li.setProperty('IsPlayable', 'true')
+        xbmcplugin.addDirectoryItem(addon_handle, url, li, isFolder=False)
+    
+    xbmcplugin.endOfDirectory(addon_handle)
 
-if action is None:
-    show_main_menu()
-elif action == 'tv':
-    tv.show_tv_list(addon_handle, add_video_item)
+# Menu de Séries
+def series_menu():
+    items = [
+        ("Série 1", "http://example.com/serie1-ep1.mp4"),
+        ("Série 2", "http://example.com/serie2-ep1.mp4"),
+    ]
+    
+    for label, url in items:
+        li = xbmcgui.ListItem(label)
+        li.setProperty('IsPlayable', 'true')
+        xbmcplugin.addDirectoryItem(addon_handle, url, li, isFolder=False)
+    
     xbmcplugin.endOfDirectory(addon_handle)
-elif action == 'filmes':
-    filmes.show_filmes_list(addon_handle, add_video_item)
+
+# Menu de Desenhos
+def desenhos_menu():
+    items = [
+        ("Desenho 1", "http://example.com/desenho1.mp4"),
+        ("Desenho 2", "http://example.com/desenho2.mp4"),
+    ]
+    
+    for label, url in items:
+        li = xbmcgui.ListItem(label)
+        li.setProperty('IsPlayable', 'true')
+        xbmcplugin.addDirectoryItem(addon_handle, url, li, isFolder=False)
+    
     xbmcplugin.endOfDirectory(addon_handle)
-elif action == 'series':
-    series.show_series_list(addon_handle, add_video_item)
+
+# Pesquisa
+def pesquisa_menu():
+    keyboard = xbmcgui.Keyboard('', 'Pesquisar')
+    keyboard.doModal()
+    
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        li = xbmcgui.ListItem(f"Resultados para: {query}")
+        xbmcplugin.addDirectoryItem(addon_handle, "", li, isFolder=False)
+    
     xbmcplugin.endOfDirectory(addon_handle)
-elif action == 'desenhos':
-    desenhos.show_desenhos_list(addon_handle, add_video_item)
-    xbmcplugin.endOfDirectory(addon_handle)
-elif action == 'pesquisa':
-    pesquisa_obj.show_pesquisa(addon_handle, add_video_item)
-    xbmcplugin.endOfDirectory(addon_handle)
+
+# Roteamento
+if len(sys.argv) > 2:
+    params = sys.argv[2]
+    if '?action=tv' in params:
+        tv_menu()
+    elif '?action=filmes' in params:
+        filmes_menu()
+    elif '?action=series' in params:
+        series_menu()
+    elif '?action=desenhos' in params:
+        desenhos_menu()
+    elif '?action=pesquisa' in params:
+        pesquisa_menu()
+    else:
+        main_menu()
 else:
-    xbmcplugin.endOfDirectory(addon_handle)
+    main_menu()
